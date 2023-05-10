@@ -12,7 +12,7 @@ const yogaApp = createYoga<RequestEvent>({
 		typeDefs: schema,
 		resolvers: {
 			Query: {
-				users: () => users
+				users: (source, args, context, info) => users
 			}
 		}
 	}),
