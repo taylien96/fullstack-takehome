@@ -5,6 +5,11 @@ type User {
 	email: String
 }
 
+type UserPage {
+	users: [User!]!
+	total_count: Int!
+}
+
 type Query {
-	users: [User]
+	users(limit: Int!, from: Int!): UserPage
 }

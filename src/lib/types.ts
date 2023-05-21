@@ -4,3 +4,7 @@ export type UserType = {
 	email: string;
 	avatar: string;
 };
+export type UserPageType = {
+	users: UserType[]
+	total_count: number
+}
