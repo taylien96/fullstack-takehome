@@ -38,6 +38,29 @@
 		variables:{from, limit}
 	});
 	
+	let intersectionObs = <IntersectionObserver | null>null;
+
+	function createIntersectionObs(){
+		if (intersectionObs) return;
+		intersectionObs = new IntersectionObserver(
+			(elements) => {
+				elements.forEach(element => {
+					const event = element.isIntersecting ? 'viewing' : 'notViewing'
+					element.target.dispatchEvent(new CustomEvent(event))
+				});
+			}
+		)
+	}
+
+	function observer(element : any){
+		createIntersectionObs();
+		intersectionObs?.observe(element)
+		return {
+			unobserve(){
+				intersectionObs?.unobserve(element)
+			}
+		}
+	}
 	
 
 </script>
@@ -53,7 +76,10 @@
 		{/if}
 		{#if $result.fetching}
 			<Loader />
+		{:else}
+			<span use:observer
+			on:viewing={getNextPage}
+			></span>
 		{/if}
 	</div>
-	<p>{y} and {x} and {h}</p>
 </div>
