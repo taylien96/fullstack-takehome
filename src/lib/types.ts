@@ -8,3 +8,4 @@ export type UserPageType = {
 	users: UserType[]
 	total_count: number
 }
+export type viewing = string
