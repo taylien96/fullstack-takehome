@@ -3,23 +3,33 @@
 	import { cacheExchange, createClient, fetchExchange, getContextClient, gql, queryStore, setContextClient } from '@urql/svelte';
 	import Loader from 'components/Loader.svelte';
 	import User from 'components/User.svelte';
-	import type { UserPageType } from 'lib/types';
+	import type { UserPageType, UserType } from 'lib/types';
 	
-	function getNextPage(){
+	async function getNextPage (){
+		console.log($result.data?.users.users)
+		
 		from = from + 10
+		userArray = userArray?.concat($result.data?.users.users)
+		if(userArray.length >= $result.data?.users.total_count) {
+			moreToQuery = false
+		}
 	}
 
 	let y: number;
 	let x: number;
 	let h: number;
-
+	let moreToQuery: boolean = true;
 	const client = createClient({
 		url: '/graphql',
 		exchanges: [cacheExchange, fetchExchange]
 	});
+	
 	setContextClient(client)
+
 	let limit: number = 10;
 	let from: number = 0;
+
+
 	$: result = queryStore<{ users: UserPageType }>({
 		client: getContextClient(),
 		query: gql`
@@ -37,7 +47,9 @@
 		`,
 		variables:{from, limit}
 	});
+	let userArray : UserType[] = []
 	
+
 	let intersectionObs = <IntersectionObserver | null>null;
 
 	function createIntersectionObs(){
@@ -69,12 +81,12 @@
 
 <div bind:clientHeight={h} class="w-full h-full">
 	<div class="flex flex-col gap-4 items-center p-4">
-		{#if $result.data?.users}
-		{#each $result.data.users.users as user (user.id)}
+		{#if userArray[0]}
+		{#each userArray as user (user.id)}
 			<User {user} />
 		{/each}
 		{/if}
-		{#if $result.fetching}
+		{#if $result.fetching && moreToQuery}
 			<Loader />
 		{:else}
 			<span use:observer
