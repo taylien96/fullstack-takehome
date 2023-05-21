@@ -6,8 +6,6 @@
 	import type { UserPageType, UserType } from 'lib/types';
 	
 	async function getNextPage (){
-		console.log($result.data?.users.users)
-		
 		from = from + 10
 		userArray = userArray?.concat($result.data?.users.users)
 		if(userArray.length >= $result.data?.users.total_count) {
