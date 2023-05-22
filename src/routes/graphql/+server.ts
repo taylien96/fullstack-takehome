@@ -13,7 +13,12 @@ const yogaApp = createYoga<RequestEvent>({
 		resolvers: {
 			Query: {
 				users: (source, args, context, info) => {
-				return {users : users.slice(args.from, args.from+args.limit), total_count : users.length}}
+					return {users : users.slice(args.from, args.from+args.limit), total_count : users.length}
+				},
+				usersSearch: (source, args, context, info) => {
+					return {users: users.filter((user) => user.name.toLowerCase().includes(args.searchQuery.toLowerCase())).slice(0, args.limit),
+					total_count : users.length}
+				}
 			}
 		}
 	}),

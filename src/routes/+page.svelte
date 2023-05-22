@@ -1,14 +1,19 @@
 
 <script lang="ts">
-	import { cacheExchange, createClient, fetchExchange, getContextClient, gql, queryStore, setContextClient } from '@urql/svelte';
+	import { cacheExchange, createClient, fetchExchange, getContextClient, gql, queryStore, setContextClient, type Pausable } from '@urql/svelte';
 	import Loader from 'components/Loader.svelte';
 	import User from 'components/User.svelte';
-	import type { UserPageType, UserType, viewing } from 'lib/types';
+	import Error from 'components/Error.svelte';
+	import type { UserPageType, UserType, UserSearchPageType } from 'lib/types';
+	import Searchbar from 'components/Searchbar.svelte';
 	
 
 	
 	let moreToQuery: boolean = true;
 	let userQueryError: boolean = false;
+	let errorMessage: string = ' ';
+	let searchQuery: string = '';
+	let isPaused: boolean = true; 
 
 
 	const client = createClient({
@@ -22,7 +27,7 @@
 	let from: number = 0;
 
 
-	$: result = queryStore<{ users: UserPageType }>({
+	$: resultPaginatedQuery = queryStore<{ users: UserPageType }>({
 		client: getContextClient(),
 		query: gql`
 			query ($from: Int!, $limit: Int!) {
@@ -39,8 +44,27 @@
 		`,
 		variables:{from, limit}
 	});
-
+	$: resultSearchQuery = queryStore<{pause: Pausable, users: UserSearchPageType }>(
+		{
+		client: getContextClient(),
+		query: gql`
+			query ($searchQuery: String!, $limit: Int!) {
+				usersSearch (searchQuery: $searchQuery, limit: $limit){
+					users {
+						id 
+						name
+						avatar
+						email
+					}
+					total_count
+				}
+			}
+		`,
+		variables:{searchQuery, limit},
+		pause: isPaused
+	});
 	let userArray : UserType[] = []
+	let userArraySearch : UserType[] = []
 	
 	let intersectionObs = <IntersectionObserver | null>null;
 
@@ -68,27 +92,88 @@
 	
 	const getNextPage = () =>{
 		from = from + 10;
-  		if ($result && $result.data && $result.data.users) {
-    		userArray = userArray.concat($result.data.users.users);
-    		if (userArray.length >= $result.data.users.total_count) {
+  		if ($resultPaginatedQuery && $resultPaginatedQuery.data && $resultPaginatedQuery.data.users) {
+    		userArray = userArray.concat($resultPaginatedQuery.data.users.users);
+    		if (userArray.length >= $resultPaginatedQuery.data.users.total_count) {
      		moreToQuery = false;
     		}
-  		} else{
+			userQueryError = false;
+  		} else if($resultPaginatedQuery.error){
 			userQueryError = true;
+			errorMessage= 'Failed to load more Profiles'
 		}
+	}
+	const searchQueryHandler = (event: CustomEvent<{searchQuery:string}>) =>{
+		searchQuery = event.detail.searchQuery
+		if(event.detail.searchQuery){
+			isPaused = false
+		} else{
+			isPaused = true
+		}
+		console.log($resultSearchQuery, $resultSearchQuery.data, $resultSearchQuery.data?.usersSearch)
+		if ($resultSearchQuery && $resultSearchQuery.data && $resultSearchQuery.data.usersSearch) {
+    		userArraySearch = $resultSearchQuery.data.usersSearch.users
+			console.log($resultSearchQuery.data.usersSearch.users, 'hi', userArraySearch)
+			userQueryError = false;
+  		} else if($resultSearchQuery.error && event.detail.searchQuery){
+			console.log('hi')
+			userQueryError = true;
+			errorMessage= 'Failed to search profiles'
+		}
+	}
+	const errorAckowledgeHandler = () =>{
+		!userQueryError
 	}
 </script>
 
-<svelte:window />
-
 <div class="w-full h-full">
 	<div class="flex flex-col gap-4 items-center p-4">
-		{#if userArray[0]}
-		{#each userArray as user (user.id)}
+		<Searchbar placeholder="Search Users" on:search={searchQueryHandler}/>
+		{#if !searchQuery}
+			{#if userArray[0]}
+				{#each userArray as user (user.id)}
+					<User {user} />
+				{/each}
+			{/if}
+		{:else}
+			{#if userArraySearch[0]}
+				{#each userArraySearch as user (user.id)}
+					<User {user} />
+				{/each}
+			{/if}
+		{/if}
+		{#if userQueryError}
+			<Error showError={userQueryError} errorMessage={errorMessage} on:acknowledge={errorAckowledgeHandler}/>
+		{/if}
+		{#if $resultPaginatedQuery.fetching && moreToQuery && !searchQuery}
+			<Loader />
+		{:else if $resultSearchQuery.fetching}
+			<Loader />
+		{:else if !searchQuery}
+			<span use:observer on:viewing={getNextPage}></span>
+		{/if}
+	</div>
+</div>
+
+<!-- <div class="w-full h-full">
+	<div class="flex flex-col gap-4 items-center p-4">
+		<Searchbar placeholder="Search Users" bind:value={searchQuery}/>
+		{#if !searchQuery}
+			{#if userArray[0]}
+				{#each userArray as user (user.id)}
+					<User {user} />
+				{/each}
+			{/if}
+		{:else}
+			{#if userArraySearch[0]}
+		{#each userArraySearch as user (user.id)}
 			<User {user} />
 		{/each}
+			{/if}
+		{#if userQueryError}
+			<Error showError={userQueryError} errorMessage={errorMessage}/>
 		{/if}
-		{#if $result.fetching && moreToQuery}
+		{#if $result.fetching && moreToQuery && !searchQuery}
 			<Loader />
 		{:else}
 			<span use:observer
@@ -96,4 +181,4 @@
 			></span>
 		{/if}
 	</div>
-</div>
+</div> -->

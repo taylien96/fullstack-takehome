@@ -12,4 +12,5 @@ type UserPage {
 
 type Query {
 	users(limit: Int!, from: Int!): UserPage
+	usersSearch(searchQuery: String!, limit: Int!): UserPage
 }
