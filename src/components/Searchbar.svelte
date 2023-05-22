@@ -19,8 +19,10 @@
       if(value !== ''){
       clearTimeout(timer);
       timer = setTimeout(() => {
-        dispatchSearch(inputValue);
-      }, 200); }
+        dispatchSearch(value);
+      }, 200); } else {
+        dispatchSearch(value)
+      }
     }
   </script>
   

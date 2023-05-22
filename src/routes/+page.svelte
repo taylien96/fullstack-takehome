@@ -44,7 +44,7 @@
 		`,
 		variables:{from, limit}
 	});
-	$: resultSearchQuery = queryStore<{pause: Pausable, users: UserSearchPageType }>(
+	$: resultSearchQuery = queryStore<{usersSearch: UserSearchPageType }>(
 		{
 		client: getContextClient(),
 		query: gql`
@@ -105,22 +105,23 @@
 	}
 	const searchQueryHandler = (event: CustomEvent<{searchQuery:string}>) =>{
 		searchQuery = event.detail.searchQuery
-		if(event.detail.searchQuery){
+		if(event.detail.searchQuery !== ''){
 			isPaused = false
 		} else{
 			isPaused = true
-		}
-		console.log($resultSearchQuery, $resultSearchQuery.data, $resultSearchQuery.data?.usersSearch)
-		if ($resultSearchQuery && $resultSearchQuery.data && $resultSearchQuery.data.usersSearch) {
-    		userArraySearch = $resultSearchQuery.data.usersSearch.users
-			console.log($resultSearchQuery.data.usersSearch.users, 'hi', userArraySearch)
-			userQueryError = false;
-  		} else if($resultSearchQuery.error && event.detail.searchQuery){
-			console.log('hi')
-			userQueryError = true;
-			errorMessage= 'Failed to search profiles'
+			userArraySearch = []
 		}
 	}
+	$: {
+    	if ($resultSearchQuery.data && $resultSearchQuery.data.usersSearch) {
+      		userArraySearch = $resultSearchQuery.data.usersSearch.users;
+   		}
+    	if ($resultSearchQuery.error && searchQuery) {
+      		userQueryError = true;
+      		errorMessage = 'Failed to search profiles';
+    	}
+  	}
+
 	const errorAckowledgeHandler = () =>{
 		!userQueryError
 	}
@@ -155,30 +156,3 @@
 	</div>
 </div>
 
-<!-- <div class="w-full h-full">
-	<div class="flex flex-col gap-4 items-center p-4">
-		<Searchbar placeholder="Search Users" bind:value={searchQuery}/>
-		{#if !searchQuery}
-			{#if userArray[0]}
-				{#each userArray as user (user.id)}
-					<User {user} />
-				{/each}
-			{/if}
-		{:else}
-			{#if userArraySearch[0]}
-		{#each userArraySearch as user (user.id)}
-			<User {user} />
-		{/each}
-			{/if}
-		{#if userQueryError}
-			<Error showError={userQueryError} errorMessage={errorMessage}/>
-		{/if}
-		{#if $result.fetching && moreToQuery && !searchQuery}
-			<Loader />
-		{:else}
-			<span use:observer
-			on:viewing={getNextPage}
-			></span>
-		{/if}
-	</div>
-</div> -->

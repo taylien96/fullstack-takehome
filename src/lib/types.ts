@@ -9,7 +9,7 @@ export type UserPageType = {
 	total_count: number
 }
 export type UserSearchPageType = {
-	usersSearch: UserType[]
+	users: UserType[]
 	total_count: number
 }
 export type viewing = string
