@@ -1,3 +1,3 @@
 # The Linguistic Full Stack Challenge
 
-If you're reading this, you've already been given instructions :wink:
+Works the same, no updated commands, and yes of course I read it! :wink:
